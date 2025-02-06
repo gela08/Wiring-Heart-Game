@@ -1,0 +1,350 @@
+@charset "UTF-8";
+.links {
+  font-family: Verdana, Geneva, sans-serif;
+  display: none;
+  text-align: left;
+}
+.links a {
+  display: inline-block;
+  padding: 1em;
+  color: #888;
+  background: #000;
+  text-decoration: none;
+}
+.links a.next, .links a.prev {
+  z-index: 150;
+  position: absolute;
+  bottom: 0.5em;
+}
+.links a.next:before, .links a.prev:before {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  margin-top: -0.5em;
+}
+.links a.next {
+  right: 0.5em;
+  padding-right: 2.5em;
+}
+.links a.next:before {
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+  display: block;
+  width: 1em;
+  height: 1em;
+  border: 1px solid;
+  border-top: none;
+  border-left: none;
+  right: 1em;
+}
+.links a.prev {
+  left: 0.5em;
+  padding-left: 2.5em;
+}
+.links a.prev:before {
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+  display: block;
+  width: 1em;
+  height: 1em;
+  border: 1px solid;
+  border-bottom: none;
+  border-right: none;
+  left: 1em;
+}
+.links a:hover {
+  background: #111;
+}
+.links a .collection {
+  display: block;
+  font-size: 0.7em;
+  line-height: 1.5em;
+}
+
+body {
+  background: #000;
+  color: #666;
+  font-family: Verdana, Geneva, sans-serif;
+  text-align: center;
+  position: relative;
+}
+
+.game {
+  text-align: left;
+  display: inline-block;
+}
+.game::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.tiles {
+  position: relative;
+  float: left;
+  width: 450px;
+  height: 250px;
+}
+
+.tile {
+  position: absolute;
+  background: #333;
+  width: 19px;
+  height: 19px;
+}
+.tile.wall {
+  background: #222;
+}
+.tile.floor {
+  background: #444;
+}
+
+.machine {
+  position: absolute;
+  background: #320;
+  width: 15px;
+  height: 15px;
+  margin: 2px 0 0 2px;
+}
+.machine.switch, .machine.powerSource {
+  cursor: pointer;
+  color: #000;
+}
+.machine.switch.activated, .machine.powerSource.activated {
+  color: #aaa;
+}
+.machine.switch:before, .machine.powerSource:before {
+  position: absolute;
+}
+.machine.powerSource:before {
+  top: 1px;
+  left: 2px;
+  font-size: 13px;
+}
+.machine.switch:before {
+  display: inline-block;
+  font-family: FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  content: "";
+  top: 2px;
+  left: 1px;
+  font-size: 12px;
+}
+.machine.switch.activated:before {
+  display: inline-block;
+  font-family: FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  content: "";
+}
+.machine.light {
+  color: #000;
+}
+.machine.light.activated {
+  color: #aaa;
+}
+.machine.light:before {
+  position: absolute;
+  top: 0px;
+  left: 3px;
+  font-size: 15px;
+}
+.machine.orGate {
+  color: #000;
+}
+.machine.orGate.activated {
+  color: #aaa;
+}
+.machine.orGate:before {
+  z-index: 2;
+  position: absolute;
+  top: 0px;
+  left: 3px;
+  content: "||";
+  font-size: 8px;
+  line-height: 14px;
+  font-weight: bold;
+}
+.machine.andGate {
+  color: #000;
+}
+.machine.andGate.activated {
+  color: #aaa;
+}
+.machine.andGate:before {
+  z-index: 2;
+  position: absolute;
+  top: 0px;
+  left: 2px;
+  content: "&";
+  font-size: 13px;
+  line-height: 14px;
+  font-weight: bold;
+}
+.machine.notGate {
+  color: #000;
+}
+.machine.notGate.activated {
+  color: #aaa;
+}
+.machine.notGate:before {
+  z-index: 2;
+  position: absolute;
+  top: 0px;
+  left: 5px;
+  content: "!";
+  font-size: 13px;
+  line-height: 14px;
+  font-weight: bold;
+}
+.machine.rightOutput:after, .machine.leftOutput:after, .machine.topOutput:after, .machine.bottomOutput:after {
+  content: "";
+  display: block;
+  position: absolute;
+}
+.machine.rightOutput {
+  width: 12px;
+}
+.machine.rightOutput:after {
+  top: 0px;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid #320;
+  border-bottom: 7.5px solid transparent;
+  border-top: 7.5px solid transparent;
+}
+.machine.leftOutput {
+  width: 12px;
+  margin-left: 5px;
+}
+.machine.leftOutput:after {
+  top: 0px;
+  left: -5px;
+  width: 0;
+  height: 0;
+  border-right: 5px solid #320;
+  border-bottom: 7.5px solid transparent;
+  border-top: 7.5px solid transparent;
+}
+.machine.topOutput {
+  height: 12px;
+  margin-top: 5px;
+}
+.machine.topOutput:after {
+  top: -5px;
+  left: 0px;
+  width: 0;
+  height: 0;
+  border-bottom: 5px solid #320;
+  border-left: 7.5px solid transparent;
+  border-right: 7.5px solid transparent;
+}
+.machine.bottomOutput {
+  height: 12px;
+}
+.machine.bottomOutput:after {
+  top: 12px;
+  left: 0px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid #320;
+  border-left: 7.5px solid transparent;
+  border-right: 7.5px solid transparent;
+}
+
+.wire {
+  position: absolute;
+  background: #000;
+  width: 5px;
+  height: 5px;
+  margin: 7px 0 0 7px;
+}
+.wire.red {
+  background: #300;
+}
+.wire.red::before, .wire.red::after {
+  background: #300;
+}
+.wire.red.activated {
+  background: #600;
+}
+.wire.red.activated::before, .wire.red.activated::after {
+  background: #600;
+}
+.wire.blue {
+  background: #003;
+}
+.wire.blue::before, .wire.blue::after {
+  background: #003;
+}
+.wire.blue.activated {
+  background: #036;
+}
+.wire.blue.activated::before, .wire.blue.activated::after {
+  background: #036;
+}
+.wire.connLeft::before, .wire.connRight::before {
+  position: absolute;
+  height: 3px;
+  top: 1px;
+  width: 10px;
+  content: "";
+}
+.wire.connLeft::before {
+  right: 2px;
+}
+.wire.connRight::before {
+  left: 2px;
+}
+.wire.connRight.connLeft::before {
+  width: 19px;
+  left: -7px;
+}
+.wire.connBottom::after, .wire.connTop::after {
+  position: absolute;
+  width: 3px;
+  left: 1px;
+  height: 10px;
+  content: "";
+}
+.wire.connBottom::after {
+  top: 2px;
+}
+.wire.connTop::after {
+  bottom: 2px;
+}
+.wire.connTop.connBottom::after {
+  height: 19px;
+  top: -7px;
+}
+
+.controls {
+  float: left;
+  padding: 0 10px 10px 10px;
+  height: 350px;
+}
+
+.legend dl dt {
+  margin-top: 1px;
+  clear: both;
+  float: left;
+  margin-left: 0;
+}
+.legend dl dt .tile {
+  position: relative;
+}
+.legend dl dt .wire {
+  margin: 7px;
+}
+.legend dl dd {
+  float: left;
+  margin-left: 0.5em;
+}

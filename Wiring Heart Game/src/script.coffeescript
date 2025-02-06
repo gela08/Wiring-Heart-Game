@@ -1,0 +1,611 @@
+
+$ = jQuery
+Module = this.kevthunder.Module
+
+tileSize = 20
+
+stepByStep = false
+this.clocked = clocked = []
+
+Direction = {
+  adjacents: [
+    {name: 'top', rev: 'bottom', x: 0, y: -1}
+    {name: 'right', rev: 'left', x: 1, y: 0}
+    {name: 'bottom', rev: 'top', x: 0, y: 1}
+    {name: 'left', rev: 'right', x: -1, y: 0}
+  ]
+  getByName: (name) ->
+    for direction in @adjacents
+      if direction.name == name
+        return direction
+    null
+  getByCoord: (x, y) ->
+    for direction in @adjacents
+      if direction.x == x and direction.y == y
+        return direction
+    null
+}
+
+class Tile extends Module
+  constructor: (@x, @y, @type) ->
+    super()
+    @containerDisplay = $('#TileContainer')
+    @container = tiles
+    @children = []
+    @draw()
+  draw: ->
+    newDiv = document.createElement("div");
+    displayPos = @getDisplayPos()
+    @display = jQuery(newDiv)
+      .addClass('tile')
+      .addClass(@type)
+      .appendTo(@containerDisplay)
+      .css(top: displayPos.y, left: displayPos.x)
+  remove: ->
+    @display.remove()
+  getDisplayPos: ->
+    @tileToDisplayPos(@x, @y)
+  tileToDisplayPos: (x, y) ->
+    x:x*tileSize, y:y*tileSize
+  addChild: (child) ->
+    @children.push(child)
+    child.tile = this
+  getAdjacents: ->
+    directions = Direction.adjacents
+    res = []
+    for direction in directions
+      tile = @container.getTile(@x+direction.x,@y+direction.y)
+      if tile?
+        res.push(tile)
+    res 
+  @createFromData = (data) ->
+    tile = new Tile(data.x, data.y, data.type)
+
+class Machine extends Module
+  @properties
+    tile:
+      change: ->
+        displayPos = @tile.getDisplayPos()
+        @display.css(top: displayPos.y, left: displayPos.x)
+        @display.appendTo(@tile.containerDisplay)
+    display:
+      init: ->
+        $(document.createElement("div"))
+          .addClass('machine')
+
+          
+Connected =
+  included: () ->
+    @properties
+      signals:
+        init: ->
+          []
+      connections:
+        init: ->
+          []
+    @::canConnectTo = @::canConnectTo || (target) ->
+      false
+    @::onAddConnection = @::onAddConnection || (conn)->
+    @::onRemoveConnection = @::onRemoveConnection || (conn)->
+    @::onNewSignalType = @::onNewSignalType || (signal) ->
+    @::onAddSignal = @::onAddSignal || (signal, op) ->
+    @::onRemoveSignal = @::onRemoveSignal || (signal, op) ->
+    @::onRemoveSignalType = @::onRemoveSignalType || (signal, op) ->
+    @::onReplaceSignal = @::onReplaceSignal || (oldSignal, newSignal, op) ->
+    @::acceptSignal = @::acceptSignal || (signal) ->
+      true
+    @::getOutputs = @::getOutputs || () ->
+      @getAdjacentConnections()
+  initAdjacentConnections: ->
+    added = []
+    removed = @connections
+    for conn in @getAdjacentConnections()
+      i = removed.indexOf(conn)
+      if i > -1
+        removed.splice(i, 1)
+      else
+        added.push(conn)
+    for conn in removed
+      @removeConnection(conn)
+      conn.removeConnection(this)
+    for conn in added
+      @addConnection(conn)
+      conn.addConnection(this)
+  addConnection: (conn)->
+    if this.canConnectTo(conn) and conn.canConnectTo(this)
+      @connections.push(conn)
+      @onAddConnection(conn)
+  removeConnection: (conn)->
+    i = @connections.indexOf(conn)
+    if i > -1
+      @connections.splice(i, 1)
+      @onRemoveConnection(conn)
+  getAdjacentConnections: ->
+    res = []
+    if @tile?
+      for tile in @tile.getAdjacents()
+        for child in tile.children
+          if child.canConnectTo? and (child.canConnectTo(this) or this.canConnectTo(child))
+            res.push(child)
+    res
+  getConnectionByDirection:(name)->
+    for wire in @getAdjacentConnections()
+      direction = Direction.getByCoord( wire.tile.x - @tile.x, wire.tile.y - @tile.y)
+      if direction.name == name
+        return wire
+  containsSignal: (signal, checkLast = false, checkOrigin)->
+    for c in @signals
+      if c.match(signal, checkLast, checkOrigin)
+        return c
+    null
+  addSignal: (signal, op) ->
+    unless op?.findLimiter(this)
+      unless op
+        op = new SignalOperation()
+        autoStart = true
+      op.addOperation =>
+        if !@containsSignal(signal, true) and @acceptSignal(signal)
+          similar = @containsSignal(signal)
+          @signals.push(signal)
+          @onAddSignal(signal, op)
+          unless similar
+            @onNewSignalType(signal, op)
+      if autoStart
+        op.start()
+    signal
+  removeSignal: (signal, op) ->
+    unless op?.findLimiter(this)
+      unless op
+        op = new SignalOperation
+        autoStart = true
+      op.addOperation =>
+        if (existing = @containsSignal(signal, true)) and @acceptSignal(signal)
+          @signals.splice(@signals.indexOf(existing), 1)
+          @onRemoveSignal(signal, op)
+          op.addOperation =>
+              similar = @containsSignal(signal)
+              if similar
+                @onReplaceSignal(signal, similar, op)
+              else
+                @onRemoveSignalType(signal, op)
+            , 0
+        if stepByStep
+          op.step()
+      if autoStart
+        return op.start()
+  prepForwardedSignal: (signal) ->
+    if signal.last == this then signal else signal.withLast(this)
+  forwardSignal: (signal, op) ->
+    next = @prepForwardedSignal(signal)
+    for key, conn of @getOutputs()
+      if signal.last != conn
+        conn.addSignal(next, op)
+  forwardAllSignalsTo: (conn, op) ->
+    for signal in @signals
+      next = @prepForwardedSignal(signal)
+      conn.addSignal(next, op)
+  stopForwardedSignal: (signal, op) ->
+    next = @prepForwardedSignal(signal)
+    for key, conn of @getOutputs()
+      if signal.last != conn
+        conn.removeSignal(next, op)
+  stopAllForwardedSignalTo: (conn, op) ->
+    for signal in @signals
+      next = @prepForwardedSignal(signal)
+      conn.removeSignal(next, op)
+                
+    
+          
+class PowerSource extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+        op = new SignalOperation()
+        signal = new Signal(this, 'power', true)
+        if @activated
+          @forwardSignal(signal, op)
+        else
+          @stopForwardedSignal(signal, op)
+        op.start()
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+  initDisplay: ->
+    super()
+      .addClass('powerSource')
+      .addClass('fa fa-power-off')
+      .click =>
+        @activated = !@activated
+  canConnectTo: (target) ->
+    target.wireType?
+    
+class Switch extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        op = new SignalOperation()
+        @display.toggleClass('activated',@activated)
+        if @activated
+          byType = @signals.reduce (byType,signal)->
+              unless byType[signal.type]?
+                byType[signal.type] = signal
+              byType
+            , {}
+          for type, signal of byType
+            @forwardSignal(signal, op)
+        else
+          for signal in @signals.slice()
+            @stopForwardedSignal(signal, op)
+        op.start()
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+  initDisplay: ->
+    super()
+      .addClass('switch')
+      .click =>
+        @activated = !@activated
+  canConnectTo: (target) ->
+    target.wireType?
+  onNewSignalType: (signal, op) ->
+    if @activated
+      @forwardSignal(signal, op)
+  onReplaceSignal: (oldSignal, newSignal, op) ->
+    if @activated
+      @forwardSignal(newSignal, op)
+  onRemoveSignal: (signal, op) ->
+    if @activated
+      @stopForwardedSignal(signal, op)
+    
+class Light extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+  initDisplay: ->
+    super()
+      .addClass('light')
+      .addClass('fa fa-lightbulb-o')
+  canConnectTo: (target) ->
+    target.wireType?
+  onNewSignalType: (signal) ->
+    if signal.type == 'power'
+      @activated = true
+  onRemoveSignalType: (signal) ->
+    if signal.type == 'power'
+      @activated = false
+    
+class OrGate extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+  constructor: (outputDirection) ->
+    super()
+    @outputDirection = Direction.getByName(outputDirection)
+  initDisplay: ->
+    super()
+      .addClass('orGate')
+      .addClass(@outputDirection.name+'Output')
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+  canConnectTo: (target) ->
+    target.wireType?
+  acceptSignal: (signal) ->
+    signal.getDirection(@tile) != @outputDirection
+  onNewSignalType: (signal, op) ->
+    if signal.type == 'power'
+      @activated = true
+    @forwardSignal(signal, op)
+  onReplaceSignal: (oldSignal, newSignal, op) ->
+    @forwardSignal(newSignal, op)
+  getOutputs: () ->
+    c = @getConnectionByDirection(@outputDirection.name)
+    if c? then [c] else []
+  onRemoveSignalType: (signal) ->
+    if signal.type == 'power'
+      @activated = false
+  onRemoveSignal: (signal, op) ->
+    @stopForwardedSignal(signal, op)
+
+class AndGate extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+  constructor: (outputDirection) ->
+    super()
+    @outputDirection = Direction.getByName(outputDirection)
+  initDisplay: ->
+    super()
+      .addClass('andGate')
+      .addClass(@outputDirection.name+'Output')
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+  canConnectTo: (target) ->
+    target.wireType?
+  getOutputs: () ->
+    c = @getConnectionByDirection(@outputDirection.name)
+    if c? then [c] else []
+  getInputConnections: ->
+    @getAdjacentConnections().filter (wire) =>
+      direction = Direction.getByCoord( wire.tile.x - @tile.x, wire.tile.y - @tile.y)
+      direction.name != @outputDirection.name
+  acceptSignal: (signal) ->
+    signal.getDirection(@tile) != @outputDirection
+  onAddSignal: (signal, op) ->
+    iConn = @getInputConnections()
+    cSignals = @signals.filter (c) ->
+      c.type == signal.type
+    if iConn.length == cSignals.length
+      if signal.type == 'power'
+        @activated = true
+      @forwardSignal(signal, op)
+  onRemoveSignal: (signal, op) ->
+    if signal.getDirection(@tile) != @outputDirection
+      @activated = false
+      @stopForwardedSignal(signal, op)
+        
+class NotGate extends Machine
+  @include Connected
+  @properties
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+  constructor: (outputDirection) ->
+    super()
+    @outputDirection = Direction.getByName(outputDirection)
+  initDisplay: ->
+    super()
+      .addClass('notGate')
+      .addClass(@outputDirection.name+'Output')
+  changeTile: ->
+    super()
+    @initAdjacentConnections()
+    @initOutput()
+  initOutput: ->
+    if @signals.length == 0
+      signal = new Signal(this,'power',true)
+      @forwardSignal(signal)
+  canConnectTo: (target) ->
+    target.wireType?
+  acceptSignal: (signal) ->
+    signal.getDirection(@tile) != @outputDirection
+  getOutputs: () ->
+    c = @getConnectionByDirection(@outputDirection.name)
+    if c? then [c] else []
+  onNewSignalType: (signal, op) ->
+    if signal.type == 'power'
+      @activated = true
+    @stopForwardedSignal(signal, op)
+    op.addLimiter(this)
+  onReplaceSignal: (oldSignal, newSignal, op) ->
+    @stopForwardedSignal(newSignal, op)
+  prepForwardedSignal: (signal) ->
+    unless signal.origin instanceof NotGate
+      signal = new Signal(this,'power',true)
+    if signal.last == this then signal else signal.withLast(this)
+  onRemoveSignalType: (signal, op) ->
+    if signal.type == 'power'
+      @activated = false
+    @forwardSignal(signal, op)
+    op.addLimiter(this)
+        
+class Wire extends Module
+  constructor: (@wireType = 'red') ->
+    super()
+  @include Connected
+  @properties
+    tile:
+      change: ->
+        displayPos = @tile.getDisplayPos()
+        @display.css(top: displayPos.y, left: displayPos.x)
+        @display.appendTo(@tile.containerDisplay)
+        @initAdjacentConnections()
+    display:
+      init: ->
+        $(document.createElement("div"))
+          .addClass('wire')
+          .addClass(@wireType)
+    connTop:
+      change: ->
+        @display.toggleClass('connTop',@connTop)
+    connRight:
+      change: ->
+        @display.toggleClass('connRight',@connRight)
+    connBottom:
+      change: ->
+        @display.toggleClass('connBottom',@connBottom)
+    connLeft:
+      change: ->
+        @display.toggleClass('connLeft',@connLeft)
+    activated:
+      change: ->
+        @display.toggleClass('activated',@activated)
+  onAddConnection: (conn)->
+      direction = Direction.getByCoord( conn.tile.x - @tile.x, conn.tile.y - @tile.y)
+      conName = 'conn' + direction.name.charAt(0).toUpperCase() + direction.name.slice(1)
+      this[conName] = true
+      @forwardAllSignalsTo(conn)
+  onRemoveConnection: (conn)->
+      direction = Direction.getByCoord( conn.tile.x - @tile.x, conn.tile.y - @tile.y)
+      conName = 'conn' + direction.name.charAt(0).toUpperCase() + direction.name.slice(1)
+      this[conName] = false
+  canConnectTo: (target) ->
+    !target.wireType? or target.wireType == @wireType
+    
+  onNewSignalType: (signal, op) ->
+    if signal.type == 'power'
+      @activated = true
+    @forwardSignal(signal, op)
+  onReplaceSignal: (oldSignal, newSignal, op) ->
+    @forwardSignal(newSignal, op)
+  onRemoveSignalType: (signal) ->
+    if signal.type == 'power'
+      @activated = false
+  onRemoveSignal: (signal, op) ->
+    @stopForwardedSignal(signal, op)
+    
+  @matrixDataType = {
+    red: 1
+    blue: 2
+  }
+  @loadMatrix = (tileContainer, matrix) ->
+    for y, row of matrix
+      for x, val of row
+        for type, num of @matrixDataType
+          if val & num
+            tile = tileContainer.getTile(parseInt(x), parseInt(y))
+            tile.addChild(new Wire(type))
+
+class Signal extends Module
+  constructor: (@origin, @type = 'signal', @exclusive = false) ->
+    super()
+    @last = @origin
+  withLast: (last) ->
+    signal = new @__proto__.constructor(@origin, @type, @exclusive)
+    signal.last = last
+    signal
+  copy: ->
+    signal = new @__proto__.constructor(@origin, @type, @exclusive)
+    signal.last = @last
+    signal
+  match: (signal, checkLast = false, checkOrigin = @exclusive) ->
+    (!checkLast or signal.last == @last) and (checkOrigin or signal.origin == @origin) and signal.type == @type
+  getDirection: (from)->
+    direction = Direction.getByCoord( @last.tile.x - from.x, @last.tile.y - from.y)
+    
+class SignalOperation extends Module
+  constructor: () ->
+    super()
+    @queue = []
+    @limiters = []
+  addOperation: (funct, priority = 1) ->
+    if priority
+      @queue.unshift funct
+    else
+      @queue.push funct
+  addLimiter: (connected) ->
+    if !@findLimiter(connected)
+      @limiters.push connected
+  findLimiter: (connected) ->
+    @limiters.indexOf(connected) > -1
+  start: () ->
+    if stepByStep
+      clocked.push(this)
+    else
+      while @queue.length
+        @step()
+  step: () ->
+    if @queue.length == 0
+      @done()
+    else
+      funct = @queue.shift(funct)
+      funct(this)
+  done: () ->
+    index = clocked.indexOf(this)
+    if index != -1
+      clocked.splice(index, 1)
+
+class TileContainer
+  constructor: ->
+    @coords = {}
+    @tiles = []
+  addTile: (tile) ->
+    @tiles.push(tile)
+    @coords[tile.x] = {} unless @coords[tile.x]?
+    @coords[tile.x][tile.y] = tile
+  getTile: (x, y) ->
+    if @coords[x]?[y]?
+      @coords[x][y]
+  loadMatrix: (matrix) ->
+    types = {w:'wall', f:'floor'}
+    for y, row of matrix
+      for x, letter of row
+        data = {
+          x: parseInt(x),
+          y: parseInt(y),
+          type: types[letter],
+        }
+        @addTile(Tile.createFromData(data))
+  allTiles: ->
+    @tiles.slice()
+  clearAll: ->
+    for tile in @tiles
+      tile.remove()
+    @coords = {}
+    @tiles = []
+    
+this.tiles = tiles = new TileContainer()
+
+tiles.loadMatrix([
+  ["w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "w", "w", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "w"],
+  ["w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w"],
+])
+
+Wire.loadMatrix(tiles, [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 2, 2, 2, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 2, 2, 2],
+  [0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 3, 2, 2, 2, 0, 2, 2, 2, 2],
+  [0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 2, 2, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 2, 2, 0, 2, 0, 2],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 2, 2, 0, 2, 2],
+  [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+])
+
+tiles.getTile(7,3).addChild(new PowerSource())
+tiles.getTile(16,2).addChild(new PowerSource())
+tiles.getTile(1,1).addChild(new Light())
+tiles.getTile(6,1).addChild(new Light())
+tiles.getTile(19,1).addChild(new Light())
+tiles.getTile(5,8).addChild(new PowerSource())
+tiles.getTile(5,10).addChild(new PowerSource())
+tiles.getTile(7,8).addChild(new AndGate('right'))
+tiles.getTile(7,6).addChild(new PowerSource())
+tiles.getTile(9,8).addChild(new OrGate('right'))
+tiles.getTile(15,9).addChild(new Light())
+tiles.getTile(15,5).addChild(new NotGate('bottom'))
+tiles.getTile(14,5).addChild(new NotGate('bottom'))
+tiles.getTile(3,4).addChild(new NotGate('left'))
+tiles.getTile(6,4).addChild(new NotGate('left'))
+tiles.getTile(9,1).addChild(new OrGate('left'))
+tiles.getTile(15,3).addChild(new Switch())
+tiles.getTile(17,8).addChild(new NotGate('right'))
+tiles.getTile(18,6).addChild(new NotGate('left'))
+tiles.getTile(16,6).addChild(new NotGate('left'))
+tiles.getTile(19,5).addChild(new PowerSource())
+tiles.getTile(19,7).addChild(new Switch())
+tiles.getTile(18,9).addChild(new Light())
+
+$('#StepByStep').change ->
+  stepByStep = $(this).is(':checked')
+
+setInterval ->
+    clocked.forEach (clocked) ->
+      clocked.step()
+  , 50
