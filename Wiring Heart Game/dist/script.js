@@ -1,4 +1,4 @@
-(function() {
+(function () {
   var $, AndGate, Connected, Direction, Light, Machine, Module, NotGate, OrGate, PowerSource, Signal, SignalOperation, Switch, Tile, TileContainer, Wire, clocked, stepByStep, tileSize, tiles;
 
   $ = jQuery;
@@ -38,7 +38,7 @@
         y: 0
       }
     ],
-    getByName: function(name) {
+    getByName: function (name) {
       var direction, j, len, ref;
       ref = this.adjacents;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -49,7 +49,7 @@
       }
       return null;
     },
-    getByCoord: function(x, y) {
+    getByCoord: function (x, y) {
       var direction, j, len, ref;
       ref = this.adjacents;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -125,12 +125,12 @@
 
   };
 
-  Machine = (function() {
-    class Machine extends Module {};
+  Machine = (function () {
+    class Machine extends Module { };
 
     Machine.properties({
       tile: {
-        change: function() {
+        change: function () {
           var displayPos;
           displayPos = this.tile.getDisplayPos();
           this.display.css({
@@ -141,7 +141,7 @@
         }
       },
       display: {
-        init: function() {
+        init: function () {
           return $(document.createElement("div")).addClass('machine');
         }
       }
@@ -152,37 +152,37 @@
   }).call(this);
 
   Connected = {
-    included: function() {
+    included: function () {
       this.properties({
         signals: {
-          init: function() {
+          init: function () {
             return [];
           }
         },
         connections: {
-          init: function() {
+          init: function () {
             return [];
           }
         }
       });
-      this.prototype.canConnectTo = this.prototype.canConnectTo || function(target) {
+      this.prototype.canConnectTo = this.prototype.canConnectTo || function (target) {
         return false;
       };
-      this.prototype.onAddConnection = this.prototype.onAddConnection || function(conn) {};
-      this.prototype.onRemoveConnection = this.prototype.onRemoveConnection || function(conn) {};
-      this.prototype.onNewSignalType = this.prototype.onNewSignalType || function(signal) {};
-      this.prototype.onAddSignal = this.prototype.onAddSignal || function(signal, op) {};
-      this.prototype.onRemoveSignal = this.prototype.onRemoveSignal || function(signal, op) {};
-      this.prototype.onRemoveSignalType = this.prototype.onRemoveSignalType || function(signal, op) {};
-      this.prototype.onReplaceSignal = this.prototype.onReplaceSignal || function(oldSignal, newSignal, op) {};
-      this.prototype.acceptSignal = this.prototype.acceptSignal || function(signal) {
+      this.prototype.onAddConnection = this.prototype.onAddConnection || function (conn) { };
+      this.prototype.onRemoveConnection = this.prototype.onRemoveConnection || function (conn) { };
+      this.prototype.onNewSignalType = this.prototype.onNewSignalType || function (signal) { };
+      this.prototype.onAddSignal = this.prototype.onAddSignal || function (signal, op) { };
+      this.prototype.onRemoveSignal = this.prototype.onRemoveSignal || function (signal, op) { };
+      this.prototype.onRemoveSignalType = this.prototype.onRemoveSignalType || function (signal, op) { };
+      this.prototype.onReplaceSignal = this.prototype.onReplaceSignal || function (oldSignal, newSignal, op) { };
+      this.prototype.acceptSignal = this.prototype.acceptSignal || function (signal) {
         return true;
       };
-      return this.prototype.getOutputs = this.prototype.getOutputs || function() {
+      return this.prototype.getOutputs = this.prototype.getOutputs || function () {
         return this.getAdjacentConnections();
       };
     },
-    initAdjacentConnections: function() {
+    initAdjacentConnections: function () {
       var added, conn, i, j, k, l, len, len1, len2, ref, removed, results;
       added = [];
       removed = this.connections;
@@ -209,13 +209,13 @@
       }
       return results;
     },
-    addConnection: function(conn) {
+    addConnection: function (conn) {
       if (this.canConnectTo(conn) && conn.canConnectTo(this)) {
         this.connections.push(conn);
         return this.onAddConnection(conn);
       }
     },
-    removeConnection: function(conn) {
+    removeConnection: function (conn) {
       var i;
       i = this.connections.indexOf(conn);
       if (i > -1) {
@@ -223,7 +223,7 @@
         return this.onRemoveConnection(conn);
       }
     },
-    getAdjacentConnections: function() {
+    getAdjacentConnections: function () {
       var child, j, k, len, len1, ref, ref1, res, tile;
       res = [];
       if (this.tile != null) {
@@ -241,7 +241,7 @@
       }
       return res;
     },
-    getConnectionByDirection: function(name) {
+    getConnectionByDirection: function (name) {
       var direction, j, len, ref, wire;
       ref = this.getAdjacentConnections();
       for (j = 0, len = ref.length; j < len; j++) {
@@ -252,7 +252,7 @@
         }
       }
     },
-    containsSignal: function(signal, checkLast = false, checkOrigin) {
+    containsSignal: function (signal, checkLast = false, checkOrigin) {
       var c, j, len, ref;
       ref = this.signals;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -263,7 +263,7 @@
       }
       return null;
     },
-    addSignal: function(signal, op) {
+    addSignal: function (signal, op) {
       var autoStart;
       if (!(op != null ? op.findLimiter(this) : void 0)) {
         if (!op) {
@@ -287,7 +287,7 @@
       }
       return signal;
     },
-    removeSignal: function(signal, op) {
+    removeSignal: function (signal, op) {
       var autoStart;
       if (!(op != null ? op.findLimiter(this) : void 0)) {
         if (!op) {
@@ -318,14 +318,14 @@
         }
       }
     },
-    prepForwardedSignal: function(signal) {
+    prepForwardedSignal: function (signal) {
       if (signal.last === this) {
         return signal;
       } else {
         return signal.withLast(this);
       }
     },
-    forwardSignal: function(signal, op) {
+    forwardSignal: function (signal, op) {
       var conn, key, next, ref, results;
       next = this.prepForwardedSignal(signal);
       ref = this.getOutputs();
@@ -340,7 +340,7 @@
       }
       return results;
     },
-    forwardAllSignalsTo: function(conn, op) {
+    forwardAllSignalsTo: function (conn, op) {
       var j, len, next, ref, results, signal;
       ref = this.signals;
       results = [];
@@ -351,7 +351,7 @@
       }
       return results;
     },
-    stopForwardedSignal: function(signal, op) {
+    stopForwardedSignal: function (signal, op) {
       var conn, key, next, ref, results;
       next = this.prepForwardedSignal(signal);
       ref = this.getOutputs();
@@ -366,7 +366,7 @@
       }
       return results;
     },
-    stopAllForwardedSignalTo: function(conn, op) {
+    stopAllForwardedSignalTo: function (conn, op) {
       var j, len, next, ref, results, signal;
       ref = this.signals;
       results = [];
@@ -379,7 +379,7 @@
     }
   };
 
-  PowerSource = (function() {
+  PowerSource = (function () {
     class PowerSource extends Machine {
       changeTile() {
         super.changeTile();
@@ -402,7 +402,7 @@
 
     PowerSource.properties({
       activated: {
-        change: function() {
+        change: function () {
           var op, signal;
           this.display.toggleClass('activated', this.activated);
           op = new SignalOperation();
@@ -421,7 +421,7 @@
 
   }).call(this);
 
-  Switch = (function() {
+  Switch = (function () {
     class Switch extends Machine {
       changeTile() {
         super.changeTile();
@@ -462,12 +462,12 @@
 
     Switch.properties({
       activated: {
-        change: function() {
+        change: function () {
           var byType, j, len, op, ref, signal, type;
           op = new SignalOperation();
           this.display.toggleClass('activated', this.activated);
           if (this.activated) {
-            byType = this.signals.reduce(function(byType, signal) {
+            byType = this.signals.reduce(function (byType, signal) {
               if (byType[signal.type] == null) {
                 byType[signal.type] = signal;
               }
@@ -493,7 +493,7 @@
 
   }).call(this);
 
-  Light = (function() {
+  Light = (function () {
     class Light extends Machine {
       changeTile() {
         super.changeTile();
@@ -526,7 +526,7 @@
 
     Light.properties({
       activated: {
-        change: function() {
+        change: function () {
           return this.display.toggleClass('activated', this.activated);
         }
       }
@@ -536,7 +536,7 @@
 
   }).call(this);
 
-  OrGate = (function() {
+  OrGate = (function () {
     class OrGate extends Machine {
       constructor(outputDirection) {
         super();
@@ -597,7 +597,7 @@
 
     OrGate.properties({
       activated: {
-        change: function() {
+        change: function () {
           return this.display.toggleClass('activated', this.activated);
         }
       }
@@ -607,7 +607,7 @@
 
   }).call(this);
 
-  AndGate = (function() {
+  AndGate = (function () {
     class AndGate extends Machine {
       constructor(outputDirection) {
         super();
@@ -652,7 +652,7 @@
       onAddSignal(signal, op) {
         var cSignals, iConn;
         iConn = this.getInputConnections();
-        cSignals = this.signals.filter(function(c) {
+        cSignals = this.signals.filter(function (c) {
           return c.type === signal.type;
         });
         if (iConn.length === cSignals.length) {
@@ -676,7 +676,7 @@
 
     AndGate.properties({
       activated: {
-        change: function() {
+        change: function () {
           return this.display.toggleClass('activated', this.activated);
         }
       }
@@ -686,7 +686,7 @@
 
   }).call(this);
 
-  NotGate = (function() {
+  NotGate = (function () {
     class NotGate extends Machine {
       constructor(outputDirection) {
         super();
@@ -766,7 +766,7 @@
 
     NotGate.properties({
       activated: {
-        change: function() {
+        change: function () {
           return this.display.toggleClass('activated', this.activated);
         }
       }
@@ -776,7 +776,9 @@
 
   }).call(this);
 
-  Wire = (function() {
+  Wire = (function () {
+    
+
     class Wire extends Module {
       constructor(wireType = 'red') {
         super();
@@ -828,12 +830,12 @@
         results = [];
         for (y in matrix) {
           row = matrix[y];
-          results.push((function() {
+          results.push((function () {
             var results1;
             results1 = [];
             for (x in row) {
               val = row[x];
-              results1.push((function() {
+              results1.push((function () {
                 var ref, results2;
                 ref = this.matrixDataType;
                 results2 = [];
@@ -859,50 +861,44 @@
 
     Wire.include(Connected);
 
+
+    // Update Wire to illuminate tiles and manage fog
     Wire.properties({
+      activated: {
+        change: function () {
+          this.display.toggleClass('activated', this.activated);
+          if (this.activated) {
+            this.tile.illuminate(); // Clear fog when activated
+          } else {
+            this.tile.dim(); // Reapply fog when deactivated
+          }
+        }
+      },
+
       tile: {
-        change: function() {
-          var displayPos;
-          displayPos = this.tile.getDisplayPos();
+        change: function () {
+          const displayPos = this.tile.getDisplayPos();
           this.display.css({
             top: displayPos.y,
             left: displayPos.x
           });
           this.display.appendTo(this.tile.containerDisplay);
-          return this.initAdjacentConnections();
+          this.initAdjacentConnections();
         }
       },
+
       display: {
-        init: function() {
+        init: function () {
           return $(document.createElement("div")).addClass('wire').addClass(this.wireType);
         }
       },
-      connTop: {
-        change: function() {
-          return this.display.toggleClass('connTop', this.connTop);
-        }
-      },
-      connRight: {
-        change: function() {
-          return this.display.toggleClass('connRight', this.connRight);
-        }
-      },
-      connBottom: {
-        change: function() {
-          return this.display.toggleClass('connBottom', this.connBottom);
-        }
-      },
-      connLeft: {
-        change: function() {
-          return this.display.toggleClass('connLeft', this.connLeft);
-        }
-      },
-      activated: {
-        change: function() {
-          return this.display.toggleClass('activated', this.activated);
-        }
-      }
+
+      connTop: { change: function () { this.display.toggleClass('connTop', this.connTop); } },
+      connRight: { change: function () { this.display.toggleClass('connRight', this.connRight); } },
+      connBottom: { change: function () { this.display.toggleClass('connBottom', this.connBottom); } },
+      connLeft: { change: function () { this.display.toggleClass('connLeft', this.connLeft); } }
     });
+
 
     Wire.matrixDataType = {
       red: 1,
@@ -1005,6 +1001,27 @@
 
   };
 
+  // Add illuminate and dim methods to the Tile class
+  Tile.prototype.illuminate = function () {
+    this.display.addClass('activated');
+    this.propagateLight();
+  };
+
+  Tile.prototype.dim = function () {
+    this.display.removeClass('activated');
+  };
+
+  // Optionally propagate light to adjacent tiles
+  Tile.prototype.propagateLight = function () {
+    let adjacents = this.getAdjacents();
+    adjacents.forEach(tile => {
+      if (!tile.display.hasClass('activated')) {
+        tile.display.addClass('dimmed');
+        setTimeout(() => tile.display.removeClass('dimmed'), 500); // Temporary glow
+      }
+    });
+  };
+
   TileContainer = class TileContainer {
     constructor() {
       this.coords = {};
@@ -1035,7 +1052,7 @@
       results = [];
       for (y in matrix) {
         row = matrix[y];
-        results.push((function() {
+        results.push((function () {
           var results1;
           results1 = [];
           for (x in row) {
@@ -1073,33 +1090,45 @@
   this.tiles = tiles = new TileContainer();
 
   tiles.loadMatrix([
-    ["w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w"],
-    ["w", "w", "w", "w", "f", "f", "f", "f", "f", "w", "w", "w", "w", "w", "f", "f", "f", "f", "f", "w", "w", "w", "w"],
-    ["w", "w", "w", "f", "f", "f", "f", "f", "f", "f", "w", "w", "w", "f", "f", "f", "f", "f", "f", "f", "w", "w", "w"],
-    ["w", "w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w", "w"],
-    ["w", "w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "w"],
-    ["w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "f", "f", "f", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w"],
-    ["w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w", "w"]
+    //"1" "2", "3", "4", "5", "6", "7", "8", "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23" "24" "25" "26" "27" "28,"29" 30, 31 32, 33, 34, 35
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//1
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//2
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//3
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//4
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//5
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//6
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//7
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//8
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//9
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//10
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//11
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//12
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//13
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//14
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//15
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//16
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//17
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//18
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//19
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//20
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//21
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//22
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//23
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//24
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//25
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//26
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//27
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//28
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//29
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//30
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//31
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//32
+    ["w", "f", "f", "f", "f", "f", "f", "f", "f","f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f", "f","f","f","f","f","f","f","w"],//33
   ]);
-  
+
   Wire.loadMatrix(tiles, [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+ // [1, 2, 3, 4, 5, 6, 7, 8, 9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35                      
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
     [0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0],
     [0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0],
@@ -1125,36 +1154,36 @@
   ]);
 
 
-//heart light
-tiles.getTile(11, 4).addChild(new PowerSource()); 
+  //heart light
+  tiles.getTile(11, 4).addChild(new PowerSource());
 
-//I and Heart Connection
-tiles.getTile(1, 10).addChild(new NotGate('right')); 
+  //I and Heart Connection
+  tiles.getTile(1, 10).addChild(new NotGate('right'));
 
-// // I
-// tiles.getTile(3, 6).addChild(new PowerSource()); 
+  // // I
+  // tiles.getTile(3, 6).addChild(new PowerSource()); 
 
-// // L
-// tiles.getTile(5, 9).addChild(new OrGate('right'));
+  // // L
+  // tiles.getTile(5, 9).addChild(new OrGate('right'));
 
-// // O
-// tiles.getTile(8, 10).addChild(new NotGate('top')); 
-// tiles.getTile(8, 6).addChild(new Switch());
-
-
-// // V 
-// tiles.getTile(15, 10).addChild(new Light());
-// tiles.getTile(12, 7).addChild(new NotGate('right'));
+  // // O
+  // tiles.getTile(8, 10).addChild(new NotGate('top')); 
+  // tiles.getTile(8, 6).addChild(new Switch());
 
 
+  // // V 
+  // tiles.getTile(15, 10).addChild(new Light());
+  // tiles.getTile(12, 7).addChild(new NotGate('right'));
 
 
-  $('#StepByStep').change(function() {
+
+
+  $('#StepByStep').change(function () {
     return stepByStep = $(this).is(':checked');
   });
 
-  setInterval(function() {
-    return clocked.forEach(function(clocked) {
+  setInterval(function () {
+    return clocked.forEach(function (clocked) {
       return clocked.step();
     });
   }, 50);

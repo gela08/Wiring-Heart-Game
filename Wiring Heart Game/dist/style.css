@@ -73,10 +73,13 @@ body {
   position: relative;
 }
 
+
+
 .game {
   text-align: left;
   display: inline-block;
 }
+
 .game::after {
   content: "";
   display: table;
@@ -86,7 +89,7 @@ body {
 .tiles {
   position: relative;
   float: left;
-  width: 450px;
+  width: 750px;
   height: 250px;
 }
 
@@ -268,26 +271,33 @@ body {
   margin: 7px 0 0 7px;
 }
 .wire.red {
-  background: #300;
+  background: #444;
 }
 .wire.red::before, .wire.red::after {
-  background: #300;
+  background: #444;
 }
 .wire.red.activated {
   background: #600;
+  box-shadow: 0 0 15px 5px rgba(158, 5, 5, 0.8);
+  background-color: rgba(174, 7, 7, 0.9);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
 .wire.red.activated::before, .wire.red.activated::after {
   background: #600;
 }
 .wire.blue {
-  background: #003;
+  background: #444;
 }
 .wire.blue::before, .wire.blue::after {
-  background: #003;
+  background: #444;
 }
 .wire.blue.activated {
   background: #036;
+  box-shadow: 0 0 15px 5px rgba(0, 34, 255, 0.8);
+  background-color: rgba(0, 21, 255, 0.9);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
+
 .wire.blue.activated::before, .wire.blue.activated::after {
   background: #036;
 }
@@ -347,4 +357,12 @@ body {
 .legend dl dd {
   float: left;
   margin-left: 0.5em;
+}
+
+
+/* Tile illumination effect */
+.tile.activated {
+  box-shadow: 0 0 30px 10px rgba(253, 253, 240, 0.5);
+  background-color: rgba(247, 247, 230, 0.8);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
