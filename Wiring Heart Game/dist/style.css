@@ -368,7 +368,7 @@ body {
 }
 
 @media screen and (max-width: 450px) {
-  .game {
+  body {
     display: flex;
     justify-content: center;
     align-items: center;
