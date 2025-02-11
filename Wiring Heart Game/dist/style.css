@@ -366,3 +366,11 @@ body {
   background-color: rgba(247, 247, 230, 0.8);
   transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
+
+@media screen and (max-width: 450px) {
+  .game {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: scale(1.2)
+}
