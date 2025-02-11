@@ -367,7 +367,7 @@ body {
   transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
-@media screen and (max-width: 450px) {
+/* @media screen and (max-width: 450px) {
   body {
     display: flex;
     justify-content: center;
@@ -378,5 +378,5 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%)
-  }
+  } */
 }
