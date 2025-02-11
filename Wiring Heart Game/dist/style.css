@@ -373,4 +373,10 @@ body {
     justify-content: center;
     align-items: center;
     transform: scale(1.2)
+  }
+  #TileContainer {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%)
+  }
 }
