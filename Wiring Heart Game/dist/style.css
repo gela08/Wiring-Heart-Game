@@ -73,6 +73,21 @@ body {
   position: relative;
 }
 
+h1 {
+  text-align: center;
+}
+
+
+.how {
+  float: none;
+  transform: translateY(535px);
+  text-align: start;
+}
+
+h4 {
+  text-align: left;
+  margin-left: -10px;
+}
 
 
 .game {
@@ -394,3 +409,11 @@ body {
   background-color: rgba(247, 247, 230, 0.8);
   transition: box-shadow 0.3s ease, background-color 0.3s ease;
 } */
+
+
+@media (max-width: 1280px) {
+  .controls {
+    float: none;
+    transform: translateY(435px);
+  }
+}
